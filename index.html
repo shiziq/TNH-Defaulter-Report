@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, theme-color=#08393D">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TNH Debt Collector">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <title>TNH Debt Collector</title>
+  <style>
+    :root {
+      --primary: #08393D;
+      --primary-light: #0F5A5F;
+      --gold: #D39F29;
+      --bg: #f0f4f5;
+      --surface: #ffffff;
+      --surface-alt: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0F172A;
+      --text-mid: #475569;
+      --text-light: #94a3b8;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #d97706;
+      --info: #2563eb;
+      --radius: 10px;
+      --radius-sm: 7px;
+      --shadow: 0 1px 2px rgba(15,23,42,0.05);
+      --transition: 0.18s ease;
+    }
+    [data-theme="dark"] {
+      --bg: #0c1920;
+      --surface: #12242a;
+      --surface-alt: #0e1f24;
+      --border: #1e3a40;
+      --text: #e2e8f0;
+      --text-mid: #94a3b8;
+      --text-light: #64748b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; min-height: 100dvh;
+      padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,90px) env(safe-area-inset-left,0);
+      transition: background var(--transition), color var(--transition);
+      -webkit-font-smoothing: antialiased;
+    }
+    .sig { font-family: Georgia, 'Times New Roman', serif; font-weight: 700; }
+
+    /* Sign-in */
+    .signin-overlay { position: fixed; inset: 0; z-index: 9000; background: linear-gradient(135deg,#08393D,#062427); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .signin-card { background: white; border-radius: 16px; padding: 32px 24px; max-width: 380px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+    .signin-card h1 { font-family: Georgia, serif; font-size: 22px; color: #08393D; margin-bottom: 4px; font-weight: 700; }
+    .signin-card .sub { font-size: 12px; color: #647480; margin-bottom: 24px; }
+    .signin-card .field { margin-bottom: 16px; }
+    .signin-card .field label { display: block; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px; }
+    .signin-card .field input, .signin-card .field select { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 15px; background: #f8fafc; color: #0F172A; transition: all 0.2s; }
+    .signin-card .field input:focus, .signin-card .field select:focus { outline: none; border-color: #D39F29; box-shadow: 0 0 0 3px rgba(211,159,41,0.15); }
+    .signin-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #08393D; color: white; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .signin-btn:hover { background: #0F5A5F; }
+    .signin-skip { display: block; text-align: center; margin-top: 16px; font-size: 12px; color: #94a3b8; text-decoration: none; cursor: pointer; }
+
+    /* Top bar */
+    .top-bar { background: linear-gradient(135deg,var(--primary),#062427); color: white; padding: 14px 18px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .top-bar .user-badge { margin-left: auto; font-size: 11px; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .top-bar h1 { font-family: Georgia, serif; font-size: 16px; margin: 0; font-weight: 700; }
+    .top-bar .ver { font-size: 9px; color: var(--gold); background: rgba(211,159,41,0.18); padding: 2px 7px; border-radius: 999px; font-weight: 700; }
+
+    .tab-content { display: none; padding-bottom: 20px; }
+    .tab-content.active { display: block; }
+
+    /* Stats compact */
+    .stats-compact { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 14px; }
+    .stats-compact .st { background: var(--surface); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); text-align: center; }
+    .stats-compact .st .num { font-size: 20px; font-weight: 800; color: var(--primary); }
+    .stats-compact .st .lbl { font-size: 9px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+    /* Cards */
+    .card { background: var(--surface); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin: 10px 14px; }
+    .card h2 { font-family: Georgia, serif; font-size: 16px; color: var(--primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); font-weight: 700; }
+    .card h3 { font-size: 13px; color: var(--text); margin: 10px 0 6px; }
+
+    /* Forms */
+    .form-mobile { display: flex; flex-direction: column; gap: 10px; }
+    .form-mobile .row { display: flex; gap: 8px; }
+    .form-mobile .row > * { flex: 1; }
+    .form-mobile label { font-size: 10px; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; display: block; }
+    .form-mobile input, .form-mobile select, .form-mobile textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; background: var(--surface-alt); color: var(--text); transition: all var(--transition); -webkit-appearance: none; }
+    .form-mobile input:focus, .form-mobile select:focus, .form-mobile textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(211,159,41,0.15); }
+    .form-mobile textarea { min-height: 80px; resize: vertical; }
+    .form-mobile .helper { font-size: 10px; color: var(--text-light); }
+    .form-mobile .field-mob { display: flex; flex-direction: column; gap: 4px; }
+
+    .btn { padding: 11px 16px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; border: none; font-family: inherit; font-size: 13px; transition: all var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 5px; touch-action: manipulation; }
+    .btn:active { transform: scale(0.97); }
+    .btn-teal { background: var(--primary); color: white; }
+    .btn-gold { background: var(--gold); color: var(--primary); font-weight: 800; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text-mid); }
+    .btn-amber { background: var(--warning); color: white; }
+    .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid var(--danger); }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 7px 11px; font-size: 11px; border-radius: 5px; }
+
+    /* Record card */
+    .record-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; position: relative; }
+    .record-card .rc-name { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+    .record-card .rc-meta { font-size: 11px; color: var(--text-mid); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .record-card .rc-meta span { display: inline-flex; align-items: center; gap: 3px; }
+    .record-card .rc-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; }
+    .pay-bar { height: 6px; border-radius: 3px; background: #e2e8f0; margin-top: 6px; overflow: hidden; }
+    .pay-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+    /* Bottom nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; background: var(--surface); border-top: 1px solid var(--border); display: flex; padding: env(safe-area-inset-bottom,8px) 0 8px; box-shadow: 0 -2px 10px rgba(0,0,0,0.06); }
+    .bottom-nav .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; cursor: pointer; font-size: 10px; font-weight: 600; color: var(--text-light); border: none; background: none; font-family: inherit; transition: color var(--transition); position: relative; }
+    .bottom-nav .nav-item.active { color: var(--primary); }
+    .bottom-nav .nav-item svg { width: 20px; height: 20px; }
+    .nav-badge { position: absolute; top: 2px; margin-left: 14px; background: var(--danger); color: white; font-size: 9px; border-radius: 999px; padding: 1px 5px; font-weight: 700; }
+
+    /* Search */
+    .search-bar { padding: 8px 14px; display: flex; gap: 8px; }
+    .search-bar input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-family: inherit; font-size: 14px; background: var(--surface-alt); color: var(--text); }
+    .search-bar input:focus { outline: none; border-color: var(--gold); }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-overlay .backdrop { position: absolute; inset: 0; }
+    .modal-sheet { position: relative; background: var(--surface); border-radius: 16px 16px 0 0; padding: 20px 16px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); z-index: 1; }
+    .modal-sheet .close-sheet { position: absolute; top: 14px; right: 16px; background: var(--surface-alt); border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; line-height: 26px; text-align: center; cursor: pointer; color: var(--text-mid); z-index: 2; }
+    .modal-sheet h2 { font-family: Georgia, serif; font-size: 17px; color: var(--primary); margin-bottom: 14px; font-weight: 700; padding-right: 36px; }
+    .modal-sheet .field { margin-bottom: 12px; }
+    .modal-sheet .field label { display: block; font-size: 10px; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+    .modal-sheet .field input, .modal-sheet .field select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; background: var(--surface-alt); color: var(--text); }
+    .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 14px; }
+
+    .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(120px); z-index: 600; background: var(--primary); color: white; padding: 12px 22px; border-radius: 20px; font-size: 13px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,0.25); opacity: 0; transition: all 0.35s; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .upload-zone { padding: 20px; border: 2px dashed var(--border); border-radius: var(--radius-sm); text-align: center; cursor: pointer; transition: all var(--transition); margin-bottom: 12px; }
+    .upload-zone:active, .upload-zone.drag { border-color: var(--gold); background: rgba(211,159,41,0.05); }
+
+    /* Report viewer (in-app, polished) */
+    .report-viewer { position: fixed; inset: 0; z-index: 400; background: var(--bg); overflow-y: auto; display: none; flex-direction: column; }
+    .report-viewer.open { display: flex; }
+    .report-viewer .rv-bar { position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg,var(--primary),#062427); color: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .report-viewer .rv-bar button { background: rgba(255,255,255,0.15); color: white; border: none; padding: 6px 14px; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .report-viewer .rv-title { flex: 1; text-align: center; font-size: 13px; font-weight: 600; }
+    .report-viewer .rv-content { padding: 16px; }
+    .report-viewer .rv-hero { background: linear-gradient(135deg,var(--primary),#062427); color: white; padding: 20px 18px; margin: -16px -16px 16px; }
+    .report-viewer .rv-hero h1 { font-family: Georgia,serif; font-size: 20px; margin: 0; font-weight: 700; }
+    .report-viewer .rv-hero .sub { font-size: 11px; opacity: 0.8; margin-top: 4px; }
+    .report-viewer .rv-hero .tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .report-viewer .rv-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
+    .report-viewer .rv-card h3 { font-family: Georgia,serif; font-size: 14px; color: var(--primary); margin: 0 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--gold); }
+    .report-viewer .rv-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .report-viewer .rv-kpi { text-align: center; padding: 12px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-alt); }
+    .report-viewer .rv-kpi .num { font-size: 18px; font-weight: 800; color: var(--primary); }
+    .report-viewer .rv-kpi .lbl { font-size: 9px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+    .report-viewer table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .report-viewer table th { background: var(--primary); color: white; padding: 8px 8px; text-align: left; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; position: sticky; top: 0; }
+    .report-viewer table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+    .report-viewer table tr:nth-child(even) td { background: var(--surface-alt); }
+    .report-viewer .rv-insight { background: var(--surface-alt); border-left: 3px solid var(--gold); padding: 12px; margin: 10px 0; font-size: 12px; line-height: 1.6; color: var(--text-mid); border-radius: 0 6px 6px 0; }
+    .report-viewer .rv-footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 10px; color: var(--text-light); display: flex; justify-content: space-between; }
+    .report-viewer .pay-row { display: flex; align-items: center; gap: 6px; }
+    .report-viewer .pay-bar { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .report-viewer .pay-bar-fill { height: 100%; border-radius: 4px; }
+    .report-viewer .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+    .report-viewer h4 { font-size: 12px; color: var(--primary); margin: 12px 0 6px; }
+    .report-viewer p { font-size: 12px; color: var(--text-mid); line-height: 1.6; margin: 4px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Sign-in Screen -->
+  <div class="signin-overlay" id="signinScreen">
+    <div class="signin-card">
+      <h1 class="sig">TNH Debt Collector</h1>
+      <div class="sub">Sign in to access the recovery platform</div>
+      <div class="field"><label>Full Name</label><input type="text" id="signinName" placeholder="e.g. Jane Muthoni"></div>
+      <div class="field"><label>Role</label><select id="signinRole"><option value="">Select role...</option><option>Recovery Officer</option><option>Field Agent</option><option>Supervisor</option><option>Branch Manager</option><option>Executive</option><option>Administrator</option></select></div>
+      <div class="field"><label>Device / Location (optional)</label><input type="text" id="signinDevice" placeholder="e.g. Nairobi Office"></div>
+      <button class="signin-btn" onclick="doSignIn()">Sign In</button>
+      <a class="signin-skip" onclick="doSignIn()">Skip for now</a>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar" id="topBar" style="display:none;">
+    <h1 class="sig">TNH Debt Collector</h1>
+    <span class="ver">v2</span>
+    <div class="user-badge" onclick="showSession()" id="userBadge"></div>
+  </div>
+
+  <!-- Tab: Dashboard -->
+  <div class="tab-content active" id="tab-dashboard">
+    <div class="stats-compact" id="statsGrid"></div>
+    <div class="card" style="margin:10px 14px;">
+      <h3 style="margin:0 0 4px;">Compliance Distribution</h3>
+      <div id="complianceBars" style="margin-top:8px;"></div>
+    </div>
+    <div class="card"><h2 class="sig">Recent Activity</h2><div id="recentActivityList" style="font-size:12px;color:var(--text-mid);"></div></div>
+  </div>
+
+  <!-- Tab: Records -->
+  <div class="tab-content" id="tab-records">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search debtors..." oninput="renderRecords()">
+      <select id="filterStatus" onchange="renderRecords()" style="width:auto;max-width:110px;padding:10px;border:1.5px solid var(--border);border-radius:20px;font-family:inherit;font-size:13px;background:var(--surface-alt);color:var(--text);">
+        <option value="">All</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="contacted">Contact</option><option value="negotiating">Negotiate</option><option value="agreed">Agreed</option><option value="resolved">Resolved</option><option value="escalated">Escalated</option>
+      </select>
+    </div>
+    <div id="recordsList" style="padding:0 14px;"></div>
+  </div>
+
+  <!-- Tab: New Entry -->
+  <div class="tab-content" id="tab-entry">
+    <div class="card" style="margin:10px 14px;">
+      <h2 id="form-heading" class="sig">New Entry</h2>
+      <p id="form-subtitle" style="font-size:11px;color:var(--text-light);margin:-6px 0 12px;">Enter debtor details</p>
+      <div class="form-mobile">
+        <div class="field-mob"><label>Search Member</label><input type="text" id="name" placeholder="Type name or member number..." autocomplete="off" style="width:100%;"><div id="memberDropdown" style="position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;display:none;z-index:50;"></div></div>
+        <div class="row"><div style="flex:1;"><label>Member Ref</label><input type="text" id="member_ref" placeholder="e.g. 10667"></div><div style="flex:1;"><label>National ID</label><input type="text" id="national_id" placeholder="e.g. 12345678"></div></div>
+        <div class="row"><div style="flex:1;"><label>Phone</label><input type="tel" id="phone"></div><div style="flex:1;"><label>Employment</label><select id="employment_status"><option value="">Select...</option><option>Former Hospital Staff</option><option>Current Hospital Staff</option><option>Ex-SACCO Staff</option><option>Former SACCO Official</option><option>Current Staff</option><option>Retired</option><option>Other</option></select></div></div>
+        <div class="row"><div style="flex:1;"><label>Loan (KES)</label><input type="number" id="loan_amount" placeholder="0" step="0.01"></div><div style="flex:1;"><label>Deposits (KES)</label><input type="number" id="deposits" placeholder="0" step="0.01"></div></div>
+        <div class="row"><div style="flex:1;"><label>Outstanding</label><input type="number" id="outstanding" placeholder="Auto-calc" step="0.01"></div><div style="flex:1;"><label>Status</label><select id="status"><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="contacted">Contacted</option><option value="negotiating">Negotiating</option><option value="agreed">Agreed</option><option value="resolved">Resolved</option><option value="escalated">Escalated</option></select></div></div>
+        <div class="row"><div style="flex:1;"><label>Compliance</label><select id="compliance_level"><option value="refused">Refused</option><option value="reluctant">Reluctant</option><option value="uncertain" selected>Uncertain</option><option value="willing">Willing</option><option value="committed">Committed</option></select></div><div style="flex:1;"><label>Willingness</label><div style="display:flex;align-items:center;gap:8px;"><input type="range" id="willingness_score" min="1" max="10" value="5" style="flex:1;"><span id="willingness_val" style="font-weight:700;min-width:24px;">5</span></div></div></div>
+        <div class="row"><div style="flex:1;"><label>Interview Date</label><input type="date" id="interview_date"></div><div style="flex:1;"><label>Officer</label><input type="text" id="officer"></div></div>
+        <div class="field-mob"><label>Recommendation</label><select id="recommended_option"><option value="">-- Select --</option><option>Lump Sum Settlement</option><option>Installment Plan</option><option>Salary Deduction</option><option>Legal Escalation</option><option>Waiver / Write-off</option></select></div>
+        <div class="field-mob"><label>Notes</label><textarea id="notes" placeholder="Interview notes..."></textarea></div>
+        <div class="field-mob"><label>Next Step</label><input type="text" id="next_step" placeholder="e.g. Follow-up in 7 days"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button id="saveBtn" class="btn btn-teal" onclick="saveRecord()" style="flex:1;">Save</button>
+        <button id="cancelEditBtn" class="btn btn-amber" onclick="cancelEdit()" style="flex:1;display:none;">Cancel</button>
+        <button class="btn btn-outline" onclick="clearForm()" style="flex:1;">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Reports -->
+  <div class="tab-content" id="tab-reports">
+    <div class="card"><h2 class="sig">Reports</h2>
+      <button class="btn btn-gold btn-block" onclick="viewExecutiveReport()" style="margin-bottom:10px;">Executive Summary</button>
+      <button class="btn btn-teal btn-block" onclick="viewPortfolioReport()" style="margin-bottom:10px;">Portfolio Report</button>
+      <div class="card" style="margin:12px 0;box-shadow:none;border-color:var(--border);"><h3>Cloud Sync (Supabase)</h3>
+      <button class="btn btn-teal btn-block" onclick="syncCloud()" style="margin-bottom:8px;">Sync Now</button>
+      <div id="syncStatus" style="font-size:11px;color:var(--text-mid);text-align:center;">Auto-sync on. Changes appear live across devices.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-App Report Viewer (fullscreen overlay) -->
+  <div class="report-viewer" id="reportViewer">
+    <div class="rv-bar">
+      <button onclick="closeReport()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+      <span class="rv-title" id="rvTitle"></span>
+      <button onclick="shareReport()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+    </div>
+    <div id="reportContent"></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav" id="bottomNav" style="display:none;">
+    <button class="nav-item active" data-tab="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
+    <button class="nav-item" data-tab="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><span>Records</span><span class="nav-badge" id="recordsBadge" style="display:none;">0</span></button>
+    <button class="nav-item" data-tab="entry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span>New</span></button>
+    <button class="nav-item" data-tab="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Reports</span></button>
+  </div>
+
+  <!-- Payment Sheet -->
+  <div class="modal-overlay" id="paymentSheet" onclick="if(event.target===this)closeModal('paymentSheet')">
+    <div class="modal-sheet"><div class="modal-handle"></div>
+      <button class="close-sheet" onclick="closeModal('paymentSheet')">×</button>
+      <h2 class="sig" id="paymentSheetTitle">Record Payment</h2>
+      <div style="font-size:12px;color:var(--text-mid);margin-bottom:12px;" id="paymentSheetDebtor"></div>
+      <div class="field"><label>Amount (KES)</label><input type="number" id="payAmt" placeholder="0" step="0.01"></div>
+      <div class="field"><label>Date</label><input type="date" id="payDate"></div>
+      <div class="field"><label>Method</label><select id="payMethod"><option value="mpesa">M-Pesa</option><option value="bank_transfer">Bank Transfer</option><option value="cash">Cash</option><option value="salary_deduction">Salary Deduction</option><option value="other">Other</option></select></div>
+      <div class="field"><label>Status</label><select id="payStatus"><option value="confirmed">Confirmed</option><option value="pending_verification">Pending</option><option value="bounced">Bounced</option></select></div>
+      <div class="field"><label>Reference</label><input type="text" id="payRef" placeholder="e.g. Transaction code"></div>
+      <button class="btn btn-teal btn-block" onclick="savePaymentMobile()" style="margin:12px 0;">Record Payment</button>
+      <div style="border-top:1px solid var(--border);padding-top:10px;"><h4 style="font-size:11px;color:var(--primary);margin-bottom:6px;">Payment History</h4><div id="payHistory" style="font-size:11px;color:var(--text-mid);max-height:180px;overflow-y:auto;"></div></div>
+    </div>
+  </div>
+
+  <!-- Attachments Sheet -->
+  <div class="modal-overlay" id="attachSheet" onclick="if(event.target===this)closeModal('attachSheet')">
+    <div class="modal-sheet"><div class="modal-handle"></div>
+      <button class="close-sheet" onclick="closeModal('attachSheet')">×</button>
+      <h2 class="sig">Documents</h2>
+      <div style="font-size:12px;color:var(--text-mid);margin-bottom:12px;" id="attachDebtor"></div>
+      <div class="upload-zone" id="uploadZone">
+        <div onclick="document.getElementById('fileInput').click()" style="cursor:pointer;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" style="display:block;margin:0 auto 4px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span style="font-size:11px;color:var(--text-light);">Tap to upload documents</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;justify-content:center;">
+          <button class="btn btn-teal btn-sm" onclick="event.stopPropagation();document.getElementById('cameraInput').click()" style="padding:6px 12px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Camera</button>
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();document.getElementById('fileInput').click()" style="padding:6px 12px;">Browse Files</button>
+        </div>
+        <br><span style="font-size:9px;color:var(--text-light);">PDF, images, docs — max 10MB</span>
+      </div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFileUpload(event)">
+      <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;" onchange="handleFileUpload(event)">
+      <div style="border-top:1px solid var(--border);padding-top:10px;"><h4 style="font-size:11px;color:var(--primary);margin-bottom:6px;">Attached Files</h4><div id="attachList" style="font-size:11px;color:var(--text-mid);max-height:180px;overflow-y:auto;"></div></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Session Info Sheet -->
+  <div class="modal-overlay" id="sessionSheet" onclick="if(event.target===this)closeModal('sessionSheet')">
+    <div class="modal-sheet"><div class="modal-handle"></div>
+      <button class="close-sheet" onclick="closeModal('sessionSheet')">×</button>
+      <h2 class="sig">Session Info</h2>
+      <div id="sessionInfo" style="font-size:13px;line-height:1.8;"></div>
+      <button class="btn btn-outline btn-block" onclick="doSignOut()" style="margin-top:16px;">Sign Out</button>
+      <button class="btn btn-outline btn-block" onclick="closeModal('sessionSheet')" style="margin-top:8px;">Close</button>
+    </div>
+  </div>
+
+  <script src="tnh-supabase.js"></script>
+  <script>
+    // ─── Sign-in ────────────────────────────────
+    const SESSION_KEY='tnh_session_v1';
+    const USER_PREFS_KEY='tnh_user_prefs_v1';
+    let sessionUser=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
+    let userPrefs=JSON.parse(localStorage.getItem(USER_PREFS_KEY)||'{"name":"","role":"","device":""}');
+
+    // Pre-fill sign-in form from previous session
+    (function(){var saved=userPrefs||{};var n=document.getElementById('signinName');var r=document.getElementById('signinRole');var d=document.getElementById('signinDevice');if(saved.name)n.value=saved.name;if(saved.role)r.value=saved.role;if(saved.device)d.value=saved.device;})();
+
+    function doSignIn(){var n=document.getElementById('signinName').value.trim(),r=document.getElementById('signinRole').value,d=document.getElementById('signinDevice').value.trim();userPrefs={name:n,role:r,device:d};localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs));sessionUser={name:n||'Anonymous User',role:r||'Viewer',device:d||navigator.userAgent.slice(0,60),signedIn:new Date().toISOString(),id:Date.now().toString(36)};sessionStorage.setItem(SESSION_KEY,JSON.stringify(sessionUser));document.getElementById('signinScreen').style.display='none';document.getElementById('topBar').style.display='flex';document.getElementById('bottomNav').style.display='flex';document.getElementById('userBadge').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> '+(sessionUser.name.split(' ')[0]);logAccess();renderRecords();}
+    function doSignOut(){sessionStorage.removeItem(SESSION_KEY);sessionUser=null;closeModal('sessionSheet');document.getElementById('signinScreen').style.display='flex';document.getElementById('topBar').style.display='none';document.getElementById('bottomNav').style.display='none';document.getElementById('recordsList').innerHTML='';var saved=userPrefs||{};document.getElementById('signinName').value=saved.name||'';document.getElementById('signinRole').value=saved.role||'';document.getElementById('signinDevice').value=saved.device||'';}
+    function showSession(){if(!sessionUser)return;document.getElementById('sessionInfo').innerHTML='<b>User:</b> '+e(sessionUser.name)+'<br><b>Role:</b> '+e(sessionUser.role)+'<br><b>Device:</b> '+e(sessionUser.device)+'<br><b>Signed in:</b> '+new Date(sessionUser.signedIn).toLocaleString('en-KE')+'<br><b>Session:</b> '+sessionUser.id;openModal('sessionSheet');}
+    function logAccess(){var a=JSON.parse(localStorage.getItem('tnh_access_log_v1')||'[]');a.push({user:sessionUser.name,role:sessionUser.role,device:sessionUser.device,time:new Date().toISOString(),sessionId:sessionUser.id});if(a.length>200)a=a.slice(-200);localStorage.setItem('tnh_access_log_v1',JSON.stringify(a));}
+
+    if(sessionUser){document.getElementById('signinScreen').style.display='none';document.getElementById('topBar').style.display='flex';document.getElementById('bottomNav').style.display='flex';document.getElementById('userBadge').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> '+sessionUser.name.split(' ')[0];logAccess();userPrefs={name:sessionUser.name,role:sessionUser.role,device:sessionUser.device};localStorage.setItem(USER_PREFS_KEY,JSON.stringify(userPrefs));}
+
+    // ─── Data ───────────────────────────────────
+    var STORAGE_KEY='tnh_debt_records_v3',PAYMENTS_KEY='tnh_payments_v1',ATTACHMENTS_KEY='tnh_attachments_v1';
+    var records=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'),payments=JSON.parse(localStorage.getItem(PAYMENTS_KEY)||'{}'),attachments=JSON.parse(localStorage.getItem(ATTACHMENTS_KEY)||'{}');
+    var editingId=null,currentPaymentDebtor=null,currentAttachDebtor=null;
+
+    // ─── Supabase sync glue (replaces Google Drive) ──
+    function persist(){ if(window.TNH&&window.TNH.pushAll) window.TNH.pushAll().catch(function(e){console.warn('[TNH] push failed',e);}); }
+    if(window.TNH&&window.TNH.notifyOnRemote) window.TNH.notifyOnRemote(function(){ renderRecords(); updateDashboard(); });
+
+    function e(s){var m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};return(s||'').replace(/[&<>"']/g,c=>m[c]);}
+    function fmt(n){return'KES '+(Number(n)||0).toLocaleString('en-KE',{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function fmtK(n){return(Number(n)||0).toLocaleString('en-KE',{maximumFractionDigits:0});}
+    function r2(n){return Math.round((Number(n)||0)*100)/100;}
+    function today(){return new Date().toISOString().split('T')[0];}
+    function cc(l){var c={refused:'#dc2626',reluctant:'#f97316',uncertain:'#eab308',willing:'#3b82f6',committed:'#16a34a'};return c[l]||'#6b7280';}
+    function cl(l){var c={refused:'Refused',reluctant:'Reluctant',uncertain:'Uncertain',willing:'Willing',committed:'Committed'};return c[l]||l;}
+    function sc(s){var c={pending:'Pending',in_progress:'In Progress',contacted:'Contacted',negotiating:'Negotiating',agreed:'Agreed',resolved:'Resolved',escalated:'Escalated'};return c[s]||s;}
+    function stc(s){var c={pending:'#6b7280',in_progress:'#3b82f6',contacted:'#8b5cf6',negotiating:'#f59e0b',agreed:'#10b981',resolved:'#16a34a',escalated:'#dc2626'};return c[s]||'#6b7280';}
+    function fs(size){if(!size)return'0 B';var u=['B','KB','MB','GB'],i=0,s2=size;while(s2>=1024&&i<u.length-1){s2/=1024;i++;}return s2.toFixed(i>0?1:0)+' '+u[i];}
+
+    function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2200);}
+    function openModal(id){document.getElementById(id).classList.add('open');}
+    function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+    // ─── Navigation ─────────────────────────────
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('.bottom-nav .nav-item').forEach(function(b){b.classList.remove('active');});this.classList.add('active');document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active');});document.getElementById('tab-'+this.dataset.tab).classList.add('active');if(this.dataset.tab==='dashboard')updateDashboard();if(this.dataset.tab==='records')renderRecords();});});
+
+    // ─── Dashboard ──────────────────────────────
+    function updateDashboard(){var t=records.length,out=records.reduce(function(s,r){return s+(Number(r.outstanding)||0);},0),coop=records.filter(function(r){return['willing','committed'].includes(r.compliance_level);}).length,high=records.filter(function(r){return['refused','reluctant'].includes(r.compliance_level);}).length;document.getElementById('statsGrid').innerHTML='<div class="st"><div class="num">'+t+'</div><div class="lbl">Debtors</div></div><div class="st"><div class="num" style="font-size:16px;">'+fmt(out)+'</div><div class="lbl">Outstanding</div></div><div class="st"><div class="num" style="color:#16a34a;">'+coop+'</div><div class="lbl">Cooperative</div></div><div class="st"><div class="num" style="color:#dc2626;">'+high+'</div><div class="lbl">High-Risk</div></div>';document.getElementById('recordsBadge').textContent=t;document.getElementById('recordsBadge').style.display=t>0?'block':'none';
+      var lvls={refused:0,reluctant:0,uncertain:0,willing:0,committed:0};records.forEach(function(r){if(lvls[r.compliance_level]!==undefined)lvls[r.compliance_level]++;});
+      var max=Math.max(1,Object.values(lvls).reduce(function(a,b){return a+b;},0));
+      var bars='';[{k:'refused',v:'Refused'},{k:'reluctant',v:'Reluctant'},{k:'uncertain',v:'Uncertain'},{k:'willing',v:'Willing'},{k:'committed',v:'Committed'}].forEach(function(x){var pct=Math.round((lvls[x.k]/max)*100);bars+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;"><span style="width:70px;text-align:right;font-weight:600;">'+x.v+'</span><div style="flex:1;height:14px;background:#e2e8f0;border-radius:7px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+cc(x.k)+';border-radius:7px;"></div></div><span style="width:24px;text-align:right;font-weight:700;">'+lvls[x.k]+'</span></div>';});
+      document.getElementById('complianceBars').innerHTML=bars||'No data';
+      var rec=records.slice().reverse().slice(0,5);document.getElementById('recentActivityList').innerHTML=rec.length===0?'No records yet.':rec.map(function(r){return'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span><b>'+e(r.name)+'</b><br><span style="font-size:10px;">'+sc(r.status)+'</span></span><span style="font-size:10px;color:var(--text-light);">'+(r.interview_date||'-')+'</span></div>';}).join('');}
+
+    // ─── Records ────────────────────────────────
+    function renderRecords(){var c=document.getElementById('recordsList'),sq=(document.getElementById('searchInput').value||'').toLowerCase().trim(),fs2=document.getElementById('filterStatus').value,fl=records.slice();if(sq)fl=fl.filter(function(r){return(r.name&&r.name.toLowerCase().includes(sq))||(r.member_ref&&r.member_ref.toLowerCase().includes(sq));});if(fs2)fl=fl.filter(function(r){return r.status===fs2;});fl.reverse();if(fl.length===0){c.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--text-light);">No records'+(records.length>0?' matching filters':' yet')+'.</div>';return;}
+      c.innerHTML=fl.map(function(r){var dp=(payments[r.id]||[]).filter(function(p){return p.status==='confirmed';}),paid=dp.reduce(function(s,p){return s+(Number(p.amount)||0);},0),pct=Number(r.outstanding)>0?Math.min(100,r2((paid/Number(r.outstanding))*100)):0,barC=pct>50?'#16a34a':pct>0?'#3b82f6':'#e2e8f0',ac=attachments[r.id]||[];return'<div class="record-card" onclick="editRecord(\''+r.id+'\')"><div class="rc-name">'+e(r.name)+'</div><div class="rc-meta"><span>'+e(r.member_ref||'-')+'</span><span style="font-weight:700;color:#991b1b;">'+fmt(r.outstanding)+'</span><span class="tag" style="background:'+cc(r.compliance_level)+'15;color:'+cc(r.compliance_level)+';">'+cl(r.compliance_level)+'</span><span class="tag" style="background:'+stc(r.status)+'15;color:'+stc(r.status)+';">'+sc(r.status)+'</span></div>'+(dp.length>0?'<div class="pay-bar"><div class="pay-bar-fill" style="width:'+pct+'%;background:'+barC+';"></div></div><div style="font-size:10px;color:var(--text-light);margin-top:2px;">'+dp.length+' payment(s) — '+fmt(paid)+' collected</div>':'')+'<div class="rc-actions"><button class="btn btn-amber btn-sm" onclick="event.stopPropagation();editRecord(\''+r.id+'\')">Edit</button><button class="btn btn-teal btn-sm" onclick="event.stopPropagation();viewSingleReport(\''+r.id+'\')">Report</button><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openPaymentSheet(\''+r.id+'\')">Payment</button><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openAttachSheet(\''+r.id+'\')">'+(ac.length>0?ac.length+' docs':'Docs')+'</button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteRecord(\''+r.id+'\')">Delete</button></div></div>';}).join('');}
+
+    // ─── CRUD ────────────────────────────────────
+    function editRecord(id){var r=records.find(function(rec){return rec.id===id;});if(!r)return;editingId=id;document.getElementById('name').value=r.name||'';document.getElementById('member_ref').value=r.member_ref||'';document.getElementById('national_id').value=r.national_id||'';document.getElementById('phone').value=r.phone||'';document.getElementById('employment_status').value=r.employment_status||'';document.getElementById('loan_amount').value=r2(r.loan_amount);document.getElementById('deposits').value=r2(r.deposits);document.getElementById('outstanding').value=r2(r.outstanding);document.getElementById('interview_date').value=r.interview_date||today();document.getElementById('officer').value=r.officer||'';document.getElementById('compliance_level').value=r.compliance_level||'uncertain';document.getElementById('willingness_score').value=r.willingness_score||5;document.getElementById('willingness_val').textContent=(r.willingness_score||5)+'';document.getElementById('recommended_option').value=r.recommended_option||'';document.getElementById('notes').value=r.notes||'';document.getElementById('next_step').value=r.next_step||'';document.getElementById('status').value=r.status||'';document.getElementById('form-heading').textContent='Edit: '+r.name;document.getElementById('saveBtn').textContent='Update';document.getElementById('saveBtn').classList.remove('btn-teal');document.getElementById('saveBtn').classList.add('btn-amber');document.getElementById('cancelEditBtn').style.display='flex';switchTab('entry');}
+    function cancelEdit(){editingId=null;clearForm();document.getElementById('cancelEditBtn').style.display='none';}
+    function saveRecord(){var name=document.getElementById('name').value.trim();if(!name){showToast('Enter name');return;}var loan=r2(document.getElementById('loan_amount').value),deposits=r2(document.getElementById('deposits').value),outstanding=r2(document.getElementById('outstanding').value)||r2(loan-deposits),memberRef=document.getElementById('member_ref').value.trim(),rec={id:editingId||Date.now().toString(),name:name,member_ref:memberRef,national_id:document.getElementById('national_id').value.trim(),phone:document.getElementById('phone').value.trim(),employment_status:document.getElementById('employment_status').value,category:'',status:document.getElementById('status').value,loan_amount:loan,deposits:deposits,outstanding:outstanding,interview_date:document.getElementById('interview_date').value,officer:document.getElementById('officer').value.trim(),compliance_level:document.getElementById('compliance_level').value,willingness_score:Number(document.getElementById('willingness_score').value)||5,recommended_option:document.getElementById('recommended_option').value,notes:document.getElementById('notes').value.trim(),next_step:document.getElementById('next_step').value.trim(),created_at:editingId?(records.find(function(r){return r.id===editingId;})?.created_at||new Date().toISOString()):new Date().toISOString()};if(editingId){var idx=records.findIndex(function(r){return r.id===editingId;});if(idx!==-1)records[idx]=rec;editingId=null;}else{var dup=records.find(function(r){return r.member_ref&&memberRef&&r.member_ref===memberRef;});if(dup&&!confirm('Member Ref "'+memberRef+'" already exists. Update?'))return;if(dup)Object.assign(dup,rec);else records.push(rec);}localStorage.setItem(STORAGE_KEY,JSON.stringify(records));persist();clearForm();renderRecords();updateDashboard();showToast(editingId?'Updated':'Saved');}
+    function clearForm(){['name','member_ref','national_id','phone','employment_status','loan_amount','deposits','outstanding','notes','next_step','officer'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('interview_date').value=today();document.getElementById('compliance_level').value='uncertain';document.getElementById('willingness_score').value=5;document.getElementById('willingness_val').textContent='5';document.getElementById('recommended_option').value='';document.getElementById('status').value='';document.getElementById('form-heading').textContent='New Entry';document.getElementById('saveBtn').textContent='Save';document.getElementById('saveBtn').classList.remove('btn-amber');document.getElementById('saveBtn').classList.add('btn-teal');document.getElementById('cancelEditBtn').style.display='none';document.getElementById('memberDropdown').style.display='none';}
+    function deleteRecord(id){if(!confirm('Delete this record?'))return;records=records.filter(function(r){return r.id!==id;});localStorage.setItem(STORAGE_KEY,JSON.stringify(records));persist();renderRecords();updateDashboard();showToast('Deleted');}
+
+    // ─── Payment Sheet ─────────────────────────
+    function openPaymentSheet(did){var r=records.find(function(rec){return rec.id===did;});if(!r)return;currentPaymentDebtor=did;document.getElementById('paymentSheetTitle').textContent='Payment: '+r.name;document.getElementById('paymentSheetDebtor').innerHTML='Ref: '+e(r.member_ref||'-')+' | Outstanding: '+fmt(r.outstanding);document.getElementById('payAmt').value='';document.getElementById('payDate').value=today();document.getElementById('payMethod').value='mpesa';document.getElementById('payStatus').value='confirmed';document.getElementById('payRef').value='';renderPayHistory(did);openModal('paymentSheet');}
+    function renderPayHistory(did){var c=document.getElementById('payHistory'),pms=(payments[did]||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});if(pms.length===0){c.innerHTML='<p style="color:var(--text-light);">No payments recorded.</p>';return;}var ml={mpesa:'M-Pesa',bank_transfer:'Bank',cash:'Cash',salary_deduction:'Salary',other:'Other'},sl={confirmed:'Confirmed',pending_verification:'Pending',bounced:'Bounced'};c.innerHTML=pms.map(function(p){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;"><div><b>'+fmt(p.amount)+'</b> '+(sl[p.status]||p.status)+'<div style="color:var(--text-light);font-size:10px;">'+(p.date?new Date(p.date+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}):'-')+' | '+(ml[p.method]||p.method)+'</div></div><button onclick="delPay(\''+did+'\',\''+p.id+'\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;">×</button></div>';}).join('');}
+    function savePaymentMobile(){if(!currentPaymentDebtor)return;var a=r2(document.getElementById('payAmt').value);if(!a||a<=0){showToast('Enter valid amount');return;}if(!payments[currentPaymentDebtor])payments[currentPaymentDebtor]=[];payments[currentPaymentDebtor].push({id:Date.now().toString(),amount:a,date:document.getElementById('payDate').value||today(),method:document.getElementById('payMethod').value,status:document.getElementById('payStatus').value,ref:document.getElementById('payRef').value.trim(),note:'',created_at:new Date().toISOString()});localStorage.setItem(PAYMENTS_KEY,JSON.stringify(payments));persist();document.getElementById('payAmt').value='';document.getElementById('payRef').value='';renderPayHistory(currentPaymentDebtor);renderRecords();updateDashboard();showToast('Payment recorded');}
+    function delPay(did,pid){if(!payments[did])return;payments[did]=payments[did].filter(function(p){return p.id!==pid;});if(payments[did].length===0)delete payments[did];localStorage.setItem(PAYMENTS_KEY,JSON.stringify(payments));persist();renderPayHistory(did);renderRecords();showToast('Payment deleted');}
+
+    // ─── Attachments Sheet ──────────────────────
+    function openAttachSheet(did){var r=records.find(function(rec){return rec.id===did;});if(!r)return;currentAttachDebtor=did;document.getElementById('attachDebtor').innerHTML='<b>'+e(r.name)+'</b>';renderAttachList(did);openModal('attachSheet');}
+    function renderAttachList(did){var c=document.getElementById('attachList'),docs=attachments[did]||[];if(docs.length===0){c.innerHTML='<p style="color:var(--text-light);">No documents attached.</p>';return;}c.innerHTML=docs.map(function(d,i){return'<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);"><div style="min-width:0;flex:1;"><div style="font-weight:600;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+e(d.name)+'</div><div style="font-size:10px;color:var(--text-light);">'+fs(d.size)+' | '+new Date(d.added).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'})+'</div></div><div style="display:flex;gap:4px;"><button onclick="downloadAttach(\''+did+'\','+i+')" class="btn btn-teal btn-sm" style="padding:4px 8px;font-size:10px;">Open</button><button onclick="delAttach(\''+did+'\','+i+')" class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:10px;color:var(--danger);">×</button></div></div>';}).join('');}
+    function handleFileUpload(ev){if(!currentAttachDebtor)return;var files=ev.target.files;if(!files||files.length===0)return;var maxS=10*1024*1024,processed=0;Array.from(files).forEach(function(file){if(file.size>maxS){showToast('File "'+file.name+'" exceeds 10MB');return;}var reader=new FileReader();reader.onload=function(e){if(!attachments[currentAttachDebtor])attachments[currentAttachDebtor]=[];attachments[currentAttachDebtor].push({id:Date.now().toString()+'_'+processed,name:file.name,size:file.size,type:file.type,data:e.target.result,added:new Date().toISOString()});processed++;localStorage.setItem(ATTACHMENTS_KEY,JSON.stringify(attachments));persist();renderAttachList(currentAttachDebtor);showToast(processed+' file(s) attached');};reader.onerror=function(){showToast('Error reading file');};reader.readAsDataURL(file);});ev.target.value='';}
+    function downloadAttach(did,idx){var docs=attachments[did]||[],d=docs[idx];if(!d)return;var a=document.createElement('a');a.href=d.data;a.download=d.name;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+    function delAttach(did,idx){if(!attachments[did])return;if(!confirm('Remove "'+(attachments[did][idx]?.name||'this file')+'"?'))return;attachments[did].splice(idx,1);if(attachments[did].length===0)delete attachments[did];localStorage.setItem(ATTACHMENTS_KEY,JSON.stringify(attachments));persist();renderAttachList(did);showToast('Attachment removed');}
+
+    // ─── In-App Reports ─────────────────────────
+    function closeReport(){document.getElementById('reportViewer').classList.remove('open');document.getElementById('bottomNav').style.display='flex';}
+    function shareReport(){var content=document.getElementById('reportContent').innerText||document.getElementById('reportContent').textContent;if(navigator.share){navigator.share({title:'TNH SACCO Report',text:content.slice(0,500)}).catch(function(){});}else{showToast('Copy the report manually');}}
+    function viewExecutiveReport(){if(records.length===0){showToast('No records');return;}var totalOut=records.reduce(function(s,r){return s+(Number(r.outstanding)||0);},0),gen=new Date().toLocaleDateString('en-KE',{day:'numeric',month:'long',year:'numeric'}),refused=records.filter(function(r){return r.compliance_level==='refused';}),allPaid=0,allCount=0;Object.keys(payments).forEach(function(did){(payments[did]||[]).forEach(function(p){if(p.status==='confirmed')allPaid+=Number(p.amount)||0;allCount++;});});var cmt=records.filter(function(r){return r.compliance_level==='committed';}).length,willing=records.filter(function(r){return r.compliance_level==='willing';}).length;document.getElementById('rvTitle').textContent='Executive Summary';document.getElementById('reportContent').innerHTML='<div class="rv-hero"><h1>TNH SACCO</h1><div class="sub">Executive Debt Recovery Report<br>'+gen+' — STRICTLY CONFIDENTIAL</div><div class="tags"><span class="tag" style="background:rgba(255,255,255,0.15);">'+records.length+' Debtors</span><span class="tag" style="background:rgba(255,255,255,0.15);">'+fmt(totalOut)+' Outstanding</span><span class="tag" style="background:rgba(255,255,255,0.15);">Generated by '+e(sessionUser?.name||'System')+'</span></div></div><div class="rv-content"><div class="rv-card"><h3>Portfolio Overview</h3><div class="rv-kpis"><div class="rv-kpi"><div class="num">'+records.length+'</div><div class="lbl">Total Debtors</div></div><div class="rv-kpi"><div class="num" style="font-size:15px;">'+fmt(totalOut)+'</div><div class="lbl">Outstanding</div></div><div class="rv-kpi"><div class="num" style="color:#dc2626;">'+refused.length+'</div><div class="lbl">Refused</div></div><div class="rv-kpi"><div class="num" style="color:#16a34a;">'+cmt+'</div><div class="lbl">Committed</div></div></div></div><div class="rv-card"><h3>Payment Collections</h3><div class="rv-kpis"><div class="rv-kpi"><div class="num" style="color:#16a34a;font-size:15px;">'+fmt(allPaid)+'</div><div class="lbl">Collected</div></div><div class="rv-kpi"><div class="num">'+allCount+'</div><div class="lbl">Transactions</div></div></div>'+(allCount>0?'<div class="rv-insight"><b>Collection Analysis:</b> '+allCount+' payments totalling '+fmt(allPaid)+' recorded. '+(allPaid>0&&totalOut>0?'Recovery rate stands at <b>'+r2((allPaid/(totalOut+allPaid))*100)+'%</b> of total portfolio. <b>'+(cmt+willing)+'</b> debtors are cooperative.'+(refused.length>0?' <b style="color:#dc2626;">'+refused.length+' refused payers</b> require immediate escalation.':''):'')+'</div>':'<div class="rv-insight">No payment transactions recorded yet. Start recording payments through the Records tab.</div>')+'</div><div class="rv-card"><h3>Debtor Summary</h3><table><thead><tr><th>Name</th><th>Ref</th><th style="text-align:right;">O/S</th><th>Status</th></tr></thead><tbody>'+records.slice().sort(function(a,b){return(Number(b.outstanding)||0)-(Number(a.outstanding)||0);}).map(function(r,i){var dp=(payments[r.id]||[]).filter(function(p){return p.status==='confirmed';}),paid=dp.reduce(function(s,p){return s+(Number(p.amount)||0);},0),pct=Number(r.outstanding)>0?Math.min(100,r2((paid/Number(r.outstanding))*100)):0;return'<tr><td><b>'+e(r.name)+'</b></td><td>'+e(r.member_ref||'-')+'</td><td style="text-align:right;font-weight:700;color:#991b1b;">'+fmt(r.outstanding)+'</td><td><span class="tag" style="background:'+stc(r.status)+'15;color:'+stc(r.status)+';">'+sc(r.status)+'</span>'+(paid>0?'<div class="pay-row" style="margin-top:4px;"><div class="pay-bar"><div class="pay-bar-fill" style="width:'+pct+'%;background:'+(pct>50?'#16a34a':'#3b82f6')+';"></div></div><span style="font-size:9px;">'+fmt(paid)+'</span></div>':'')+'</td></tr>';}).join('')+'</tbody></table></div><div class="rv-footer"><span>Confidential — TNH SACCO</span><span>Report '+gen+'</span></div></div>';document.getElementById('reportViewer').classList.add('open');document.getElementById('bottomNav').style.display='none';document.getElementById('reportViewer').scrollTop=0;}
+
+    function viewPortfolioReport(){if(records.length===0){showToast('No records');return;}var totalOut=records.reduce(function(s,r){return s+(Number(r.outstanding)||0);},0),gen=new Date().toLocaleDateString('en-KE',{day:'numeric',month:'long',year:'numeric'});document.getElementById('rvTitle').textContent='Portfolio Report';document.getElementById('reportContent').innerHTML='<div class="rv-hero"><h1>TNH SACCO</h1><div class="sub">Portfolio Report — '+gen+'<br>'+records.length+' Records | Total Outstanding: '+fmt(totalOut)+'</div></div><div class="rv-content"><div class="rv-card"><h3>All Debtors</h3><table><thead><tr><th>#</th><th>Name</th><th>Ref</th><th style="text-align:right;">O/S</th><th>Compliance</th></tr></thead><tbody>'+records.map(function(r,i){return'<tr><td>'+(i+1)+'</td><td><b>'+e(r.name)+'</b></td><td>'+e(r.member_ref||'-')+'</td><td style="text-align:right;font-weight:700;">'+fmt(r.outstanding)+'</td><td><span class="tag" style="background:'+cc(r.compliance_level)+'15;color:'+cc(r.compliance_level)+';">'+cl(r.compliance_level)+'</span></td></tr>';}).join('')+'</tbody></table></div><div class="rv-footer"><span>Confidential — TNH SACCO</span><span>Report '+gen+'</span></div></div>';document.getElementById('reportViewer').classList.add('open');document.getElementById('bottomNav').style.display='none';document.getElementById('reportViewer').scrollTop=0;}
+
+    function viewSingleReport(id){var r=records.find(function(rec){return rec.id===id;});if(!r)return;var dt=r.interview_date?new Date(r.interview_date+'T00:00:00').toLocaleDateString('en-KE',{month:'long',day:'numeric',year:'numeric'}):'N/A',gen=new Date().toLocaleDateString('en-KE',{day:'numeric',month:'long',year:'numeric'});var fn=function(t){return(t||'').trim()||'No notes recorded.';},fx=function(t){return(t||'').trim()||'To be determined.';};var dp=(payments[id]||[]).filter(function(p){return p.status==='confirmed';}),paid=dp.reduce(function(s,p){return s+(Number(p.amount)||0);},0),docs=attachments[id]||[],pct=Number(r.outstanding)>0?Math.min(100,r2((paid/Number(r.outstanding))*100)):0;document.getElementById('rvTitle').textContent='Case Report';document.getElementById('reportContent').innerHTML='<div class="rv-hero"><h1>'+e(r.name)+'</h1><div class="sub">Individual Case Report — '+gen+'</div><div class="tags"><span class="tag" style="background:'+cc(r.compliance_level)+'20;color:white;border:1px solid '+cc(r.compliance_level)+';">'+cl(r.compliance_level)+'</span><span class="tag" style="background:rgba(255,255,255,0.15);">'+sc(r.status)+'</span><span class="tag" style="background:rgba(255,255,255,0.15);">Willingness: '+(r.willingness_score||5)+'/10</span></div></div><div class="rv-content"><div class="rv-card"><h3>Information</h3><table><tr><td style="font-weight:700;width:40%;">Member Ref</td><td>'+e(r.member_ref||'N/A')+'</td></tr><tr><td style="font-weight:700;">National ID</td><td>'+e(r.national_id||'N/A')+'</td></tr><tr><td style="font-weight:700;">Phone</td><td>'+e(r.phone||'N/A')+'</td></tr><tr><td style="font-weight:700;">Employment</td><td>'+e(r.employment_status||'N/A')+'</td></tr></table></div><div class="rv-card"><h3>Financial Summary</h3><div class="rv-kpis"><div class="rv-kpi"><div class="lbl">Loan</div><div class="num" style="font-size:15px;color:#991b1b;">'+fmt(r.loan_amount)+'</div></div><div class="rv-kpi"><div class="lbl">Deposits</div><div class="num" style="font-size:15px;">'+fmt(r.deposits)+'</div></div><div class="rv-kpi"><div class="lbl">Outstanding</div><div class="num" style="font-size:15px;color:#991b1b;">'+fmt(r.outstanding)+'</div></div>'+(paid>0?'<div class="rv-kpi"><div class="lbl">Paid</div><div class="num" style="font-size:15px;color:#16a34a;">'+fmt(paid)+'</div></div>':'')+'</div>'+(paid>0?'<div class="pay-row" style="margin-top:8px;"><div class="pay-bar" style="height:10px;"><div class="pay-bar-fill" style="width:'+pct+'%;background:'+(pct>70?'#16a34a':pct>30?'#3b82f6':'#eab308')+';"></div></div><span style="font-size:11px;font-weight:700;">'+pct+'% recovered</span></div>':'')+'</div><div class="rv-card"><h3>Interview Assessment</h3><table><tr><td style="font-weight:700;">Date</td><td>'+dt+'</td></tr><tr><td style="font-weight:700;">Officer</td><td>'+e(r.officer||'N/A')+'</td></tr><tr><td style="font-weight:700;">Compliance</td><td><span class="tag" style="background:'+cc(r.compliance_level)+'15;color:'+cc(r.compliance_level)+';">'+cl(r.compliance_level)+'</span></td></tr><tr><td style="font-weight:700;">Willingness</td><td>'+(r.willingness_score||5)+'/10</td></tr><tr><td style="font-weight:700;">Recommendation</td><td>'+e(r.recommended_option||'N/A')+'</td></tr></table></div>'+(dp.length>0?'<div class="rv-card"><h3>Payment History ('+dp.length+' payments)</h3><table><thead><tr><th>Date</th><th style="text-align:right;">Amount</th><th>Method</th></tr></thead><tbody>'+dp.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);}).map(function(p){var ml={mpesa:'M-Pesa',bank_transfer:'Bank',cash:'Cash',salary_deduction:'Salary',other:'Other'};return'<tr><td>'+(p.date?new Date(p.date+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}):'-')+'</td><td style="text-align:right;font-weight:700;">'+fmt(p.amount)+'</td><td>'+(ml[p.method]||p.method)+'</td></tr>';}).join('')+'</tbody></table></div>':'')+(docs.length>0?'<div class="rv-card"><h3>Documents ('+docs.length+')</h3>'+docs.map(function(d){return'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+({pdf:'#dc2626',jpg:'#3b82f6',jpeg:'#3b82f6',png:'#3b82f6'}[d.name.split('.').pop().toLowerCase()]||'#6b7280')+'" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span style="flex:1;">'+e(d.name)+'</span><span style="font-size:10px;color:var(--text-light);">'+fs(d.size)+'</span></div>';}).join('')+'</div>':'')+'<div class="rv-card"><div class="rv-insight"><b>Interview Notes:</b> '+e(fn(r.notes))+'</div><div class="rv-insight"><b>Next Steps:</b> '+e(fx(r.next_step))+'</div></div><div class="rv-footer"><span>Confidential — TNH SACCO</span><span>RPT-'+id.slice(-6).toUpperCase()+' | '+gen+'</span></div></div>';document.getElementById('reportViewer').classList.add('open');document.getElementById('bottomNav').style.display='none';document.getElementById('reportViewer').scrollTop=0;}
+
+    // ─── Navigation helper ──────────────────────
+    function switchTab(name){document.querySelectorAll('.bottom-nav .nav-item').forEach(function(b){b.classList.remove('active');if(b.dataset.tab===name)b.classList.add('active');});document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active');});document.getElementById('tab-'+name).classList.add('active');if(name==='dashboard')updateDashboard();if(name==='records')renderRecords();}
+
+    // ─── Member Lookup ──────────────────────────
+    var excelData=[{"name":"Christopher M. Otieno","member_ref":"10667","share_capital":11025,"deposits":945000,"loan_amount":10016448,"national_id":"","kra_pin":"","phone":"","employment_status":"Former Hospital Staff"},{"name":"Anastasia Ochieng","member_ref":"254","share_capital":11025,"deposits":0,"loan_amount":3179393,"national_id":"11822927","kra_pin":"A004018298C","phone":"0715-196447","employment_status":"Ex-SACCO Staff"},{"name":"Jacob Oriando Ochanda","member_ref":"10912","share_capital":20000,"deposits":0,"loan_amount":2259622,"national_id":"8231594","kra_pin":"A001320691L","phone":"0722-455862","employment_status":"Former Hospital Staff"},{"name":"Mary Wanjiru Wanyoike","member_ref":"10422","share_capital":11025,"deposits":1178926,"loan_amount":3186931,"national_id":"","kra_pin":"","phone":"0727-571059","employment_status":"Former Hospital Staff"},{"name":"Juliana Njoroge- Recreated","member_ref":"10628","share_capital":11025,"deposits":391782,"loan_amount":8060610,"national_id":"10875727","kra_pin":"A002218099D","phone":"0721-171955","employment_status":"Former Hospital Staff"},{"name":"Anncenta Wangechi Mathenge","member_ref":"147","share_capital":11025,"deposits":150099,"loan_amount":910476,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Edward C. O. Kosiyo","member_ref":"11058","share_capital":11794,"deposits":0,"loan_amount":3191006,"national_id":"10973719","kra_pin":"A002219745W","phone":"0722-856835","employment_status":"Former Hospital Staff & Former SACCO Official"},{"name":"Sebastian O. Mbanda","member_ref":"10949","share_capital":11025,"deposits":749578,"loan_amount":2023590,"national_id":"13170582","kra_pin":"","phone":"","employment_status":"Current Hospital Staff & Former SACCO Official"},{"name":"Felix N. Ondonga","member_ref":"20507","share_capital":11025,"deposits":625000,"loan_amount":13022828,"national_id":"20596260","kra_pin":"","phone":"0721-482416","employment_status":"Current Hospital Staff & Former SACCO Official"},{"name":"Francis Nyamai","member_ref":"11117","share_capital":11025,"deposits":0,"loan_amount":1858151,"national_id":"11640596","kra_pin":"","phone":"","employment_status":"Former Hospital Staff"},{"name":"David A Yala","member_ref":"11370","share_capital":11025,"deposits":705285,"loan_amount":1850801,"national_id":"13601627","kra_pin":"A002633907Q","phone":"0721-496117","employment_status":"Former Hospital Staff & Former SACCO Official"},{"name":"Sophia Awuor Otieno","member_ref":"11939","share_capital":11025,"deposits":0,"loan_amount":2988176,"national_id":"14663062","kra_pin":"A002550457R","phone":"0722-643652","employment_status":"Former Hospital Staff"},{"name":"Alice Kamau","member_ref":"11091","share_capital":11025,"deposits":0,"loan_amount":9610202,"national_id":"11250984","kra_pin":"","phone":"0728-713282","employment_status":"Former Hospital Staff"},{"name":"Terry Frida K. Kaaria","member_ref":"11062","share_capital":11025,"deposits":0,"loan_amount":5338804,"national_id":"13401840","kra_pin":"A002590741Z","phone":"0725-699974","employment_status":"Former Hospital Staff"},{"name":"Peter Wachira Mwangi","member_ref":"12453","share_capital":11025,"deposits":0,"loan_amount":818288,"national_id":"20664735","kra_pin":"","phone":"0721-604230","employment_status":"Former Hospital Staff"},{"name":"Patrick Gitahi Muriithi","member_ref":"20137","share_capital":11025,"deposits":0,"loan_amount":3636469,"national_id":"11286908","kra_pin":"A002461579U","phone":"0721-914723","employment_status":"Former Hospital Staff"},{"name":"Francis Kirugi Kirera","member_ref":"468","share_capital":11025,"deposits":0,"loan_amount":3597017,"national_id":"8075936","kra_pin":"A001991152T","phone":"0724-843222","employment_status":"Former Hospital Staff"},{"name":"Ezekiel C. Cherutoi","member_ref":"12770","share_capital":22050,"deposits":0,"loan_amount":699884,"national_id":"24148519","kra_pin":"A005536110J","phone":"0700-707917","employment_status":"Former Hospital Staff"},{"name":"Esther Mumbe","member_ref":"12739","share_capital":11025,"deposits":0,"loan_amount":918051,"national_id":"21813271","kra_pin":"A003887180N","phone":"0727-950184","employment_status":"Former Hospital Staff"},{"name":"Carolyne Ayiemba Matsanza","member_ref":"11658","share_capital":11025,"deposits":0,"loan_amount":506303,"national_id":"1969266","kra_pin":"A001293495Y","phone":"","employment_status":"Former Hospital Staff & Former SACCO Official"},{"name":"Paul Mulwa Wambua","member_ref":"298","share_capital":11025,"deposits":0,"loan_amount":699099,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Elizabeth Mureithi","member_ref":"830","share_capital":11025,"deposits":0,"loan_amount":2026003,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Evans P. Ochieng .","member_ref":"12559","share_capital":11025,"deposits":0,"loan_amount":1361107,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Elizabeth Rebeccah 71","member_ref":"12795","share_capital":21525,"deposits":0,"loan_amount":284329,"national_id":"","kra_pin":"","phone":"0722-228286","employment_status":""},{"name":"George O. Migot","member_ref":"`","share_capital":11025,"deposits":0,"loan_amount":265344,"national_id":"25073262","kra_pin":"A005278865K","phone":"0722-342317","employment_status":"Former Hospital Staff"},{"name":"Khadija Taib M","member_ref":"23003","share_capital":11025,"deposits":0,"loan_amount":113596,"national_id":"3354948","kra_pin":"","phone":"0724-735307","employment_status":"Former Hospital Staff"},{"name":"Barrack Gose Ogola","member_ref":"20381","share_capital":11025,"deposits":0,"loan_amount":722987,"national_id":"11521203","kra_pin":"A002478927E","phone":"0726-833553","employment_status":"Former Hospital Staff & Former SACCO Official"},{"name":"Josphat Keke Kole","member_ref":"22385","share_capital":11025,"deposits":0,"loan_amount":701051,"national_id":"16025314","kra_pin":"A001742913L","phone":"0799-189515","employment_status":"Former Hospital Staff"},{"name":"Mary Nasambu Waliaula","member_ref":"20163","share_capital":11025,"deposits":0,"loan_amount":1747917,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Wamunyu Murage","member_ref":"20","share_capital":11025,"deposits":448643,"loan_amount":3155930,"national_id":"","kra_pin":"","phone":"0722-292489","employment_status":""},{"name":"Hezron Kiage M","member_ref":"20516","share_capital":11025,"deposits":244257,"loan_amount":2416189,"national_id":"13483140","kra_pin":"A002699223F","phone":"0722-336485","employment_status":"Former Hospital Staff"},{"name":"Beryl A. Otieno","member_ref":"20547","share_capital":11025,"deposits":13173,"loan_amount":0,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Margret Sirengo","member_ref":"10554","share_capital":11025,"deposits":577266,"loan_amount":2237559,"national_id":"","kra_pin":"","phone":"0722-679730","employment_status":"Current Hospital Staff"},{"name":"Benard A. Musera","member_ref":"20430","share_capital":11025,"deposits":829256,"loan_amount":1955778,"national_id":"","kra_pin":"","phone":"0719-396331","employment_status":"Current Hospital Staff"},{"name":"Roselyne Mumo Justus","member_ref":"10787","share_capital":0,"deposits":0,"loan_amount":1024370,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Drusila K.manyura","member_ref":"122","share_capital":11025,"deposits":0,"loan_amount":550726,"national_id":"","kra_pin":"","phone":"0721-389390","employment_status":""},{"name":"Samuel O. Ogola","member_ref":"11004","share_capital":11025,"deposits":0,"loan_amount":461684,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Sunita Nathoo","member_ref":"620","share_capital":11025,"deposits":0,"loan_amount":1549918,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Margaret Nyawira Mwangi","member_ref":"14429","share_capital":11025,"deposits":0,"loan_amount":174684,"national_id":"26153806","kra_pin":"A004710504F","phone":"0722-866050","employment_status":"Former Hospital Staff"},{"name":"Rachael Wangui Mwangi","member_ref":"12635","share_capital":11025,"deposits":0,"loan_amount":329568,"national_id":"","kra_pin":"A004241783Z","phone":"0723-213813","employment_status":"Former Hospital Staff"},{"name":"Diana Njeri Mwangi","member_ref":"411","share_capital":11025,"deposits":0,"loan_amount":319201,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Sebastian Maithya Muoki","member_ref":"13233","share_capital":11025,"deposits":0,"loan_amount":113866,"national_id":"22588269","kra_pin":"","phone":"0720-215719","employment_status":"Former Hospital Staff"},{"name":"Victoria Mwangi","member_ref":"1047","share_capital":11025,"deposits":0,"loan_amount":438836,"national_id":"","kra_pin":"","phone":"0728-564108","employment_status":""},{"name":"Lenox Kiprono Koromicha","member_ref":"13512","share_capital":11025,"deposits":0,"loan_amount":160161,"national_id":"","kra_pin":"A002944570E","phone":"0716-671999","employment_status":"Former Hospital Staff"},{"name":"Onesmus Mutunga Kyule","member_ref":"960","share_capital":11025,"deposits":0,"loan_amount":253193,"national_id":"","kra_pin":"","phone":"0720-683701","employment_status":""},{"name":"Anthony Sifuna Wasike","member_ref":"175","share_capital":11025,"deposits":0,"loan_amount":204170,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Sylvia A. Oloo","member_ref":"1097","share_capital":11025,"deposits":0,"loan_amount":132541,"national_id":"","kra_pin":"","phone":"0724-529643","employment_status":""},{"name":"Ongori Achochi","member_ref":"391","share_capital":11025,"deposits":0,"loan_amount":131312,"national_id":"","kra_pin":"","phone":"0727-279804","employment_status":""},{"name":"Togo Dolphine","member_ref":"964","share_capital":11025,"deposits":0,"loan_amount":122102,"national_id":"27439426","kra_pin":"A007010826B","phone":"0713-510774","employment_status":"Former Hospital Staff"},{"name":"Victor Lumasia Mwangi","member_ref":"13167","share_capital":11025,"deposits":0,"loan_amount":169872,"national_id":"25623124","kra_pin":"","phone":"0710-999334","employment_status":"Former Hospital Staff"},{"name":"John M. Inzoya","member_ref":"1014","share_capital":11025,"deposits":0,"loan_amount":89634,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Denis Wabomba Wanyama","member_ref":"582","share_capital":11025,"deposits":0,"loan_amount":74726,"national_id":"9","kra_pin":"","phone":"","employment_status":""},{"name":"Odeny Analysis Updated","member_ref":"617","share_capital":11025,"deposits":0,"loan_amount":28656757,"national_id":"7422116","kra_pin":"A001695919C","phone":"0700-282893","employment_status":"Ex-SACCO Staff"},{"name":"Regina Orwa","member_ref":"761","share_capital":11025,"deposits":0,"loan_amount":11574400,"national_id":"7813789","kra_pin":"A002526658Z","phone":"0722-838925","employment_status":"Ex-SACCO Staff"},{"name":"Gathoni Kariuki","member_ref":"119","share_capital":11025,"deposits":0,"loan_amount":924642,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Jeremiah Nyaega Tirimba","member_ref":"20554","share_capital":11025,"deposits":0,"loan_amount":1106008,"national_id":"21648911","kra_pin":"","phone":"0722-609422","employment_status":"Former Hospital Staff & Former SACCO Official"},{"name":"Judith Amisi Ondeko","member_ref":"12177","share_capital":11025,"deposits":0,"loan_amount":633445,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Erick L. Musungu","member_ref":"12869","share_capital":11025,"deposits":0,"loan_amount":184135,"national_id":"22843470","kra_pin":"A004717504Y","phone":"0724-737075","employment_status":"Former Hospital Staff"},{"name":"Morgan K. Lukungu","member_ref":"12991","share_capital":11025,"deposits":0,"loan_amount":142554,"national_id":"27414136","kra_pin":"A004764520S","phone":"0731-496077","employment_status":"Former Hospital Staff"},{"name":"Loise Wanjiku Ngugi","member_ref":"13088","share_capital":15000,"deposits":0,"loan_amount":450355,"national_id":"25786425","kra_pin":"","phone":"0722-258029","employment_status":"Former Hospital Staff"},{"name":"Jenniffer Mutitu Githae","member_ref":"13587","share_capital":11025,"deposits":0,"loan_amount":1756890,"national_id":"28637889","kra_pin":"A005802412L","phone":"0724-021768","employment_status":"Former Hospital Staff"},{"name":"Cornel Odhiambo M","member_ref":"20383","share_capital":11025,"deposits":0,"loan_amount":412906,"national_id":"","kra_pin":"","phone":"0722-606627","employment_status":"Former Hospital Staff"},{"name":"Charles Mwendwa Mwangi","member_ref":"344","share_capital":11025,"deposits":0,"loan_amount":68847,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Augustine Okoth Okumu","member_ref":"930","share_capital":11025,"deposits":0,"loan_amount":64105,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Caroline Cheruto","member_ref":"12619","share_capital":11025,"deposits":0,"loan_amount":13062,"national_id":"","kra_pin":"","phone":"","employment_status":""},{"name":"Jane M. Kamau","member_ref":"12804","share_capital":11025,"deposits":0,"loan_amount":40799,"national_id":"23736164","kra_pin":"A005640373U","phone":"","employment_status":"Former Hospital Staff"},{"name":"Michael Wamai Njungi","member_ref":"12627","share_capital":11025,"deposits":0,"loan_amount":222140,"national_id":"","kra_pin":"A005077601K","phone":"0729-816099","employment_status":"Former Hospital Staff"},{"name":"Lilian W.muriithi 2001","member_ref":"12693","share_capital":11025,"deposits":0,"loan_amount":109352,"national_id":"24632977","kra_pin":"A004537611Q","phone":"0727-585463","employment_status":"Former Hospital Staff"},{"name":"Isaiyah Mungai Macharia","member_ref":"12541","share_capital":22050,"deposits":0,"loan_amount":35268,"national_id":"","kra_pin":"","phone":"","employment_status":"Current Hospital Staff"},{"name":"Stephen Makokha","member_ref":"","share_capital":11025,"deposits":463203,"loan_amount":802316,"national_id":"","kra_pin":"","phone":"0720203678 / 0735142561","employment_status":"Current Hospital Staff & Former SACCO Official"}];
+
+    function searchMembers(q){if(!q)return[];var t=q.toLowerCase().trim();return excelData.filter(function(m){return(m.name&&m.name.toLowerCase().includes(t))||(m.member_ref&&m.member_ref.toLowerCase().includes(t));});}
+    function renderMemberDropdown(members){var d=document.getElementById('memberDropdown');if(!members.length){d.style.display='none';return;}d.innerHTML=members.slice(0,10).map(function(m){var out=r2((Number(m.loan_amount)||0)-(Number(m.deposits)||0));return'<div class="member-item" data-member="'+JSON.stringify(m).replace(/"/g,'&quot;')+'" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;"><div style="font-weight:600;">'+e(m.name)+'</div><div style="font-size:10px;color:var(--text-mid);">Ref: '+(m.member_ref||'-')+' | '+fmt(out)+'</div></div>';}).join('');d.style.display='block';}
+    function selectMember(m){document.getElementById('name').value=m.name||'';document.getElementById('member_ref').value=m.member_ref||'';document.getElementById('national_id').value=m.national_id||'';document.getElementById('phone').value=m.phone||'';document.getElementById('employment_status').value=m.employment_status||'';document.getElementById('loan_amount').value=r2(m.loan_amount);document.getElementById('deposits').value=r2(m.deposits);document.getElementById('outstanding').value=r2((Number(m.loan_amount)||0)-(Number(m.deposits)||0));document.getElementById('memberDropdown').style.display='none';}
+
+    (function setupLookup(){var input=document.getElementById('name'),dropdown=document.getElementById('memberDropdown'),timeout;input.addEventListener('input',function(){var q=this.value;clearTimeout(timeout);if(q.length<2){dropdown.style.display='none';return;}timeout=setTimeout(function(){renderMemberDropdown(searchMembers(q));},150);});document.addEventListener('click',function(e){if(!input.contains(e.target)&&!dropdown.contains(e.target))dropdown.style.display='none';var item=e.target.closest('.member-item');if(item){try{var m=JSON.parse(item.getAttribute('data-member'));selectMember(m);}catch(ex){console.log('Member parse error',ex);}}});})();
+
+    // Drag-and-drop for attachments
+    var uz=document.getElementById('uploadZone');if(uz){['dragenter','dragover'].forEach(function(evt){uz.addEventListener(evt,function(e){e.preventDefault();this.classList.add('drag');});});['dragleave','drop'].forEach(function(evt){uz.addEventListener(evt,function(e){e.preventDefault();this.classList.remove('drag');});});uz.addEventListener('drop',function(e){if(!currentAttachDebtor)return;var dt=e.dataTransfer;if(dt.files.length>0){handleFileUpload({target:{files:dt.files,value:''}});}});}
+
+    // ─── Cloud sync (Supabase) ────────────────────
+    function syncCloud(){var s=document.getElementById('syncStatus');if(!window.TNH||!window.TNH.ready){showToast('Connecting to cloud…');return;}s.textContent='Syncing…';window.TNH.syncNow().then(function(){s.textContent='Synced '+new Date().toLocaleTimeString('en-KE');showToast('Synced');renderRecords();updateDashboard();}).catch(function(e){s.textContent='Sync failed';showToast('Sync failed');});}
+    if(window.TNH&&window.TNH.notifyOnRemote) window.TNH.notifyOnRemote(function(){var s=document.getElementById('syncStatus');if(s)s.textContent='Updated '+new Date().toLocaleTimeString('en-KE');});
+
+    // ─── Init ────────────────────────────────────
+    document.getElementById('interview_date').value=today();
+    document.getElementById('willingness_score').addEventListener('input',function(){document.getElementById('willingness_val').textContent=this.value;});
+    if(sessionUser)updateDashboard();
+    renderRecords();
+  </script>
+</body>
+</html>
