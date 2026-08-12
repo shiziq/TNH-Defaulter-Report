@@ -366,6 +366,7 @@
       <span style="font-size:13px;color:var(--text-mid);margin-left:4px;">Debt Recovery Platform</span>
     </div>
     <div class="actions">
+      <button class="icon-btn" onclick="refreshApp()" title="Refresh & Sync"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Sync</button>
       <button class="icon-btn" onclick="exportCSV()" title="Export CSV"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>
       <button class="icon-btn" onclick="downloadJSON()" title="Backup JSON"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> Backup</button>
       <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
@@ -666,7 +667,8 @@
 
     // ─── Supabase sync glue (live sync across web + mobile) ──
     function persist(){ if(window.TNH&&window.TNH.pushAll) window.TNH.pushAll().catch(function(e){console.warn('[TNH] push failed',e);}); }
-    if(window.TNH&&window.TNH.notifyOnRemote) window.TNH.notifyOnRemote(function(){ renderRecords(); });
+    function refreshApp(){ if(window.TNH&&window.TNH.ready) window.TNH.syncNow().then(function(){renderRecords();updateDashboard();}).catch(function(e){console.warn('sync failed',e);}); else {renderRecords();updateDashboard();} }
+    if(window.TNH&&window.TNH.notifyOnRemote) window.TNH.notifyOnRemote(function(){ renderRecords(); updateDashboard(); });
     let sortAsc = true;
     let selectedIds = new Set();
     let theme = localStorage.getItem('tnh_theme') || 'light';
@@ -1289,8 +1291,10 @@
 
       const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Executive Summary</title>' +
         '<style>@import url(\'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap\');' +
+        '@page{size:A4 portrait;margin:0}' +
+        '@media print{html,body{margin:0!important;padding:0!important;background:white!important;width:210mm}.cover,.page{box-shadow:none!important;margin:0 auto!important;width:210mm!important;min-height:auto!important}}' +
         'body{font-family:"DM Sans",Arial,sans-serif;margin:0;background:#f0f4f5;color:#1a202c}' +
-        '.cover{width:210mm;min-height:297mm;margin:0 auto 20px;background:#fff;position:relative;overflow:hidden}' +
+        '.cover{width:210mm;min-height:297mm;margin:0 auto 20px;background:#fff;position:relative;overflow:hidden;page-break-after:always}' +
         '.cover .hero{background:linear-gradient(135deg,#08393D,#062427);color:white;padding:40px 32px;position:relative}' +
         '.cover .hero::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border:3px solid rgba(211,159,41,0.2);border-radius:50%}' +
         '.cover .hero h1{font-family:"Playfair Display",serif;font-size:28px;margin:0 0 4px;font-weight:800}' +
@@ -1315,7 +1319,8 @@
         '.progress-row .bar{flex:1;height:12px;border-radius:6px;overflow:hidden;background:#f1f5f9}' +
         '.progress-row .bar-fill{height:100%;border-radius:6px}' +
         '.progress-row .r{width:70px;text-align:right;font-weight:700;font-family:monospace;font-size:9px}' +
-        '.page{width:210mm;min-height:297mm;margin:0 auto 20px;background:#fff;padding:20px 28px;position:relative}' +
+        '.page{width:210mm;min-height:297mm;margin:0 auto 20px;background:#fff;padding:20px 28px;position:relative;page-break-after:always}' +
+        '.page:last-of-type{page-break-after:avoid}' +
         '.page .top-bar{position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,#08393D,#D39F29)}' +
         '.page h2{font-family:"Playfair Display",serif;font-size:16px;color:#08393D;margin:0 0 14px;padding:10px 0 8px;border-bottom:2px solid #e2e8f0}' +
         '.page h3{font-size:12px;color:#08393D;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0}' +
@@ -1452,8 +1457,11 @@
       const totalOut = records.reduce((s,r)=>s+(Number(r.outstanding)||0),0);
       const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Portfolio Report</title>' +
         '<style>@import url(\'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap\');' +
+        '@page{size:A4 portrait;margin:0}' +
+        '@media print{html,body{margin:0!important;padding:0!important;background:white!important;width:210mm}.page{box-shadow:none!important;margin:0 auto!important;width:210mm!important;min-height:auto!important}}' +
         'body{font-family:"DM Sans",Arial,sans-serif;margin:0}' +
-        '.page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:14mm;position:relative}' +
+        '.page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:14mm;position:relative;page-break-after:always}' +
+        '.page:last-of-type{page-break-after:avoid}' +
         '.top-bar{position:absolute;top:0;left:0;width:100%;height:6px;background:linear-gradient(90deg,#08393D,#D39F29)}' +
         '.header{padding:10px 0 12px;border-bottom:2px solid #e2e8f0;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start}' +
         '.brand h1{margin:0;font-size:13px;color:#08393D;text-transform:uppercase;letter-spacing:0.06em}' +
@@ -1485,8 +1493,11 @@
 
       const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Debtor Case Report - ' + escapeHtml(r.name) + '</title>' +
         '<style>@import url(\'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap\');' +
+        '@page{size:A4 portrait;margin:0}' +
+        '@media print{html,body{margin:0!important;padding:0!important;background:white!important;width:210mm}.page{box-shadow:none!important;margin:0 auto!important;width:210mm!important;min-height:auto!important}}' +
         'body{font-family:"DM Sans",Arial,sans-serif;margin:0;color:#1a202c}' +
-        '.page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;position:relative}' +
+        '.page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;position:relative;page-break-after:always}' +
+        '.page:last-of-type{page-break-after:avoid}' +
         '.hero{background:linear-gradient(135deg,#08393D,#062427);color:white;padding:24px 28px}' +
         '.hero h1{font-family:"Playfair Display",serif;font-size:22px;margin:0;font-weight:800}' +
         '.hero .sub{font-size:11px;opacity:0.8;margin-top:6px}' +
