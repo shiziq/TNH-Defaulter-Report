@@ -666,9 +666,10 @@
     let sortField = null;
 
     // ─── Supabase sync glue (live sync across web + mobile) ──
+    function tnhReload(){ records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); payments = JSON.parse(localStorage.getItem(PAYMENTS_KEY) || '{}'); attachments = JSON.parse(localStorage.getItem(ATTACHMENTS_KEY) || '{}'); }
     function persist(){ if(window.TNH&&window.TNH.pushAll) window.TNH.pushAll().catch(function(e){console.warn('[TNH] push failed',e);}); }
-    function refreshApp(){ if(window.TNH&&window.TNH.ready) window.TNH.syncNow().then(function(){renderRecords();updateDashboard();}).catch(function(e){console.warn('sync failed',e);}); else {renderRecords();updateDashboard();} }
-    if(window.TNH&&window.TNH.notifyOnRemote) window.TNH.notifyOnRemote(function(){ renderRecords(); updateDashboard(); });
+    function refreshApp(){ if(window.TNH&&window.TNH.ready) window.TNH.syncNow().then(function(){tnhReload();renderRecords();updateDashboard();}).catch(function(e){console.warn('sync failed',e);}); else {renderRecords();updateDashboard();} }
+    if(window.TNH&&window.TNH.notifyOnRemote) window.TNH.notifyOnRemote(function(){ tnhReload(); renderRecords(); updateDashboard(); });
     let sortAsc = true;
     let selectedIds = new Set();
     let theme = localStorage.getItem('tnh_theme') || 'light';
